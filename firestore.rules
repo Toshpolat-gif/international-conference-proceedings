@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isAdmin();
+    }
+
+    // The public website uses the Firebase Admin SDK on the server for public content reads.
+    // Browser clients may not directly write scholarly content.
+    match /conferences/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /articles/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /contactMessages/{id} {
+      allow read, update: if isAdmin();
+      allow create: if false;
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

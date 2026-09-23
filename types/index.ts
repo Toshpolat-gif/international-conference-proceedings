@@ -1,0 +1,60 @@
+export type Author = {
+  fullName: string;
+  institution: string;
+  country: string;
+  email: string;
+  orcid?: string;
+  isCorresponding: boolean;
+};
+
+export type Conference = {
+  id: string;
+  title: string;
+  slug: string;
+  acronym?: string;
+  theme: string;
+  description: string;
+  conferenceDate?: string;
+  location: string;
+  eventType?: "Online" | "Hybrid" | "In-person";
+  organizers: string[];
+  editors: string[];
+  proceedingsTitle: string;
+  issn?: string;
+  isbn?: string;
+  volume?: string;
+  issue?: string;
+  publicationDate?: string;
+  posterKey?: string;
+  posterContentType?: string;
+  proceedingsKey?: string;
+  status: "draft" | "published";
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type Article = {
+  id: string;
+  conferenceId: string;
+  title: string;
+  slug: string;
+  abstract: string;
+  keywords: string[];
+  authors: Author[];
+  publicationDate?: string;
+  pageStart?: string;
+  pageEnd?: string;
+  doi?: string;
+  volume?: string;
+  issue?: string;
+  license?: string;
+  language: "en";
+  pdfKey?: string;
+  pdfFileName?: string;
+  pdfSize?: number;
+  status: "draft" | "published";
+  downloadCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+};

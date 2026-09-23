@@ -1,0 +1,8 @@
+import { ContactForm } from "@/components/contact-form";
+import { PublicShell } from "@/components/public-shell";
+
+export const metadata = { robots: { index: false, follow: false } };
+
+export default function ContactPage() {
+  return <PublicShell><section className="page-head container narrow"><span className="eyebrow">Publisher correspondence</span><h1>Contact the Publisher</h1><p>Before sending a message, review the general publication conditions below. This page is intentionally separate from the site's policy pages.</p></section><section className="section"><div className="container narrow"><div className="panel" style={{ marginBottom: 18 }}><h3>General publication conditions</h3><ul className="check-list"><li>The conference administrator must provide the final publication-ready PDF for publication.</li><li>Author metadata should be complete and accurate: full name, institution, country, email, ORCID when available, and corresponding-author status.</li><li>Submissions and published papers should satisfy the publisher's ethics, plagiarism, copyright, peer-review, and AI-use requirements.</li><li>Each published record contains bibliographic metadata and can include a DOI when one has been assigned.</li><li>Authors and organizers remain responsible for the accuracy and permissions associated with submitted content.</li></ul><p className="small muted">See the full <a className="link" href="/for-authors">For Authors</a> and <a className="link" href="/publication-ethics">Publication Ethics</a> pages for the detailed framework.</p></div><ContactForm /></div></section></PublicShell>;
+}
