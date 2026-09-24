@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { getPublishedArticles, getPublishedConferences } from "@/lib/public-data";
 import { siteConfig } from "@/lib/site";
 
+export const revalidate = 60;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [conferences, articles] = await Promise.all([
     getPublishedConferences(500).catch(() => []),
