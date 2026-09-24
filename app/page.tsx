@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { PublicShell } from "@/components/public-shell";
 import { getPublishedArticles, getPublishedConferences } from "@/lib/public-data";
+import { siteConfig } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -14,8 +14,39 @@ export default async function HomePage() {
     // The public shell still renders before Firebase is configured.
   }
 
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${siteConfig.url}/#website`,
+    name: siteConfig.name,
+    url: siteConfig.url,
+    description: siteConfig.description,
+  };
+
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${siteConfig.url}/#organization`,
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/site-logo.png`,
+    description: siteConfig.description,
+  };
+
   return (
     <PublicShell>
+            <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteJsonLd),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationJsonLd),
+        }}
+      />
       <section className="hero">
         <div className="container hero-grid">
           <div>
