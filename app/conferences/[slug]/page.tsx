@@ -9,7 +9,45 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const conference = await getConferenceBySlug(slug);
-  return { title: conference?.title || "Conference", description: conference?.theme || siteConfig.description };
+
+  if (!conference) {
+    return {
+      title: "Conference not found",
+      robots: {
+        index: false,
+        follow: false
+      }
+    };
+  }
+
+  const conferenceUrl = `${siteConfig.url}/conferences/${conference.slug}`;
+
+  return {
+    title: conference.title,
+    description:
+      conference.description ||
+      conference.theme ||
+      siteConfig.description,
+
+    alternates: {
+      canonical: conferenceUrl
+    },
+
+    openGraph: {
+      type: "website",
+      title: conference.title,
+      description:
+        conference.description ||
+        conference.theme ||
+        siteConfig.description,
+      url: conferenceUrl
+    },
+
+    robots: {
+      index: true,
+      follow: true
+    }
+  };
 }
 
 export default async function ConferencePage({ params }: { params: Promise<{ slug: string }> }) {
