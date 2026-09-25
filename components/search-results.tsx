@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Article, Conference } from "@/types";
 
 const PAGE_SIZE = 20;
@@ -16,6 +16,7 @@ export function ArticleSearch({
   const [query, setQuery] = useState("");
   const [selectedConference, setSelectedConference] = useState("");
   const [page, setPage] = useState(1);
+  const [isConferenceOpen, setIsConferenceOpen] = useState(false);
 
   const conferenceMap = useMemo(
     () =>
@@ -32,6 +33,29 @@ export function ArticleSearch({
       ),
     [conferences],
   );
+
+  const selectedConferenceTitle =
+  conferences.find((conference) => conference.id === selectedConference)
+    ?.title || "All collections";
+
+const conferenceDropdownRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  function handleClickOutside(event: MouseEvent) {
+    if (
+      conferenceDropdownRef.current &&
+      !conferenceDropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsConferenceOpen(false);
+    }
+  }
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,20 +115,62 @@ export function ArticleSearch({
           aria-label="Search articles"
         />
 
-        <select
-          className="select"
-          value={selectedConference}
-          onChange={(e) => handleConferenceChange(e.target.value)}
-          aria-label="Filter by conference"
-        >
-          <option value="">All collections</option>
+        <div className="collection-select" ref={conferenceDropdownRef}>
+  <button
+    type="button"
+    className="collection-select-trigger"
+    onClick={() => setIsConferenceOpen((current) => !current)}
+    aria-haspopup="listbox"
+    aria-expanded={isConferenceOpen}
+  >
+    <span>{selectedConferenceTitle}</span>
+    <span
+      className={`collection-select-arrow ${
+        isConferenceOpen ? "open" : ""
+      }`}
+      aria-hidden="true"
+    >
+      ▾
+    </span>
+  </button>
 
-          {conferences.map((conference) => (
-            <option key={conference.id} value={conference.id}>
-              {conference.title}
-            </option>
-          ))}
-        </select>
+  {isConferenceOpen && (
+    <div className="collection-select-menu" role="listbox">
+      <button
+        type="button"
+        className={`collection-select-option ${
+          !selectedConference ? "active" : ""
+        }`}
+        onClick={() => {
+          handleConferenceChange("");
+          setIsConferenceOpen(false);
+        }}
+        role="option"
+        aria-selected={!selectedConference}
+      >
+        All collections
+      </button>
+
+      {conferences.map((conference) => (
+        <button
+          type="button"
+          key={conference.id}
+          className={`collection-select-option ${
+            selectedConference === conference.id ? "active" : ""
+          }`}
+          onClick={() => {
+            handleConferenceChange(conference.id);
+            setIsConferenceOpen(false);
+          }}
+          role="option"
+          aria-selected={selectedConference === conference.id}
+        >
+          {conference.title}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
       </div>
 
       {results.length ? (

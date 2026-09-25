@@ -19,7 +19,6 @@ export const siteConfig = {
 
 export const navigation = [
   { href: "/conferences", label: "Conferences" },
-  { href: "/proceedings", label: "Proceedings" },
   { href: "/articles", label: "Articles" },
   { href: "/authors", label: "Authors" },
   { href: "/for-authors", label: "For Authors" },
