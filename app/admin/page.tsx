@@ -104,7 +104,19 @@ export default function AdminPage() {
     catch (error) { setNotice(error instanceof Error ? error.message : "Could not update message."); }
   }
 
-  return <div className="admin-shell"><header className="admin-topbar"><div className="container admin-topbar-inner"><div className="admin-brand"><Image src="/site-logo.png" alt="" width={42} height={42} /><div><strong>International Conference Proceedings</strong><span>Admin dashboard</span></div></div><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span className="small">{user.email}</span><button className="btn btn-ghost btn-small" onClick={logout}>Sign out</button></div></div></header><div className="admin-content"><aside className="admin-sidebar"><nav className="admin-nav"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>Overview</button><button className={tab === "conferences" ? "active" : ""} onClick={() => setTab("conferences")}>Conferences</button><button className={tab === "articles" ? "active" : ""} onClick={() => setTab("articles")}>Articles</button><button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}>Messages {unreadMessages ? `(${unreadMessages})` : ""}</button></nav></aside><main className="admin-main">{notice && <div className="notice notice-success">{notice}</div>}{tab === "overview" && <OverviewTab conferences={conferences} articles={articles} unreadMessages={unreadMessages} publishedArticles={publishedArticles} publishedConferences={publishedConferences} />}{tab === "conferences" && <ConferencesTab conferences={conferences} editing={editingConference} setEditing={setEditingConference} refresh={loadData} onDelete={deleteConference} setNotice={setNotice} busy={busy} />}{tab === "articles" && <ArticlesTab articles={articles} conferences={conferences} editing={editingArticle} setEditing={setEditingArticle} refresh={loadData} onDelete={deleteArticle} setNotice={setNotice} busy={busy} />}{tab === "messages" && <MessagesTab messages={messages} markRead={markMessageRead} />}</main></div></div>;
+  async function deleteMessage(message: Message) {
+  if (!confirm("Delete this message permanently?")) return;
+
+  try {
+    await deleteDoc(doc(db, "contactMessages", message.id));
+    setMessages((items) => items.filter((m) => m.id !== message.id));
+    setNotice("Message deleted.");
+  } catch (error) {
+    setNotice(error instanceof Error ? error.message : "Could not delete message.");
+  }
+}
+
+  return <div className="admin-shell"><header className="admin-topbar"><div className="container admin-topbar-inner"><div className="admin-brand"><Image src="/site-logo.png" alt="" width={42} height={42} /><div><strong>International Conference Proceedings</strong><span>Admin dashboard</span></div></div><div style={{ display: "flex", alignItems: "center", gap: 10 }}><span className="small">{user.email}</span><button className="btn btn-ghost btn-small" onClick={logout}>Sign out</button></div></div></header><div className="admin-content"><aside className="admin-sidebar"><nav className="admin-nav"><button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>Overview</button><button className={tab === "conferences" ? "active" : ""} onClick={() => setTab("conferences")}>Conferences</button><button className={tab === "articles" ? "active" : ""} onClick={() => setTab("articles")}>Articles</button><button className={tab === "messages" ? "active" : ""} onClick={() => setTab("messages")}>Messages {unreadMessages ? `(${unreadMessages})` : ""}</button></nav></aside><main className="admin-main">{notice && <div className="notice notice-success">{notice}</div>}{tab === "overview" && <OverviewTab conferences={conferences} articles={articles} unreadMessages={unreadMessages} publishedArticles={publishedArticles} publishedConferences={publishedConferences} />}{tab === "conferences" && <ConferencesTab conferences={conferences} editing={editingConference} setEditing={setEditingConference} refresh={loadData} onDelete={deleteConference} setNotice={setNotice} busy={busy} />}{tab === "articles" && <ArticlesTab articles={articles} conferences={conferences} editing={editingArticle} setEditing={setEditingArticle} refresh={loadData} onDelete={deleteArticle} setNotice={setNotice} busy={busy} />}{tab === "messages" && <MessagesTab messages={messages} markRead={markMessageRead} deleteMessage={deleteMessage} />}</main></div></div>;
 }
 
 function OverviewTab({ conferences, articles, unreadMessages, publishedArticles, publishedConferences }: { conferences: Conference[]; articles: Article[]; unreadMessages: number; publishedArticles: number; publishedConferences: number }) {
@@ -169,6 +181,87 @@ function ArticlesTab({ articles, conferences, editing, setEditing, refresh, onDe
   return <><div className="admin-toolbar"><div><span className="eyebrow">Article management</span><h1 style={{ margin: "5px 0", color: "var(--navy)" }}>Articles</h1></div><button className="btn btn-primary" onClick={() => setEditing(blankArticle(conferences[0]?.id || ""))}>New Article</button></div>{editing && <div className="panel" style={{ marginBottom: 18 }}><h3>{form.id ? "Edit article" : "New article"}</h3><div className="form-grid"><div className="field"><label>Conference</label><select className="select" value={form.conferenceId} onChange={(e) => setEditing({ ...form, conferenceId: e.target.value })}>{conferences.map((c) => <option value={c.id} key={c.id}>{c.title}</option>)}</select></div><div className="field"><label>Publication status</label><select className="select" value={form.status} onChange={(e) => setEditing({ ...form, status: e.target.value as Article["status"] })}><option value="draft">Draft</option><option value="published">Published</option></select></div><div className="field full"><label>Title</label><input className="input" value={form.title} onChange={(e) => setEditing({ ...form, title: e.target.value })} /></div><div className="field"><label>Slug</label><input className="input" value={form.slug} onChange={(e) => setEditing({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-") })} /></div><div className="field"><label>Publication date</label><input type="date" className="input" value={form.publicationDate || ""} onChange={(e) => setEditing({ ...form, publicationDate: e.target.value })} /></div><div className="field full"><label>Abstract</label><textarea className="textarea" value={form.abstract} onChange={(e) => setEditing({ ...form, abstract: e.target.value })} /></div><div className="field full"><label>Keywords (comma-separated)</label><input className="input" value={form.keywords.join(", ")} onChange={(e) => setEditing({ ...form, keywords: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></div><div className="field"><label>Page start</label><input className="input" value={form.pageStart || ""} onChange={(e) => setEditing({ ...form, pageStart: e.target.value })} /></div><div className="field"><label>Page end</label><input className="input" value={form.pageEnd || ""} onChange={(e) => setEditing({ ...form, pageEnd: e.target.value })} /></div><div className="field"><label>Volume</label><input className="input" value={form.volume || ""} onChange={(e) => setEditing({ ...form, volume: e.target.value })} /></div><div className="field"><label>Issue</label><input className="input" value={form.issue || ""} onChange={(e) => setEditing({ ...form, issue: e.target.value })} /></div><div className="field"><label>DOI</label><input className="input" placeholder="Optional; e.g. 10.xxxx/xxxxx" value={form.doi || ""} onChange={(e) => setEditing({ ...form, doi: e.target.value })} /></div><div className="field"><label>License</label><input className="input" value={form.license || ""} onChange={(e) => setEditing({ ...form, license: e.target.value })} /></div><div className="field full"><label>Final PDF</label><input type="file" accept="application/pdf" className="input" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} />{form.pdfFileName && <span className="small muted">Current: {form.pdfFileName}</span>}</div></div><hr className="divider" /><div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}><h3 style={{ margin: 0 }}>Authors</h3><button className="btn btn-ghost btn-small" onClick={addAuthor}>Add author</button></div>{form.authors.map((author, index) => <div className="panel" style={{ marginTop: 12 }} key={index}><div className="admin-toolbar"><strong>Author {index + 1}</strong>{form.authors.length > 1 && <button className="btn btn-danger btn-small" onClick={() => removeAuthor(index)}>Remove</button>}</div><div className="form-grid"><div className="field"><label>Full name</label><input className="input" value={author.fullName} onChange={(e) => updateAuthor(index, { fullName: e.target.value })} /></div><div className="field"><label>Institution</label><input className="input" value={author.institution} onChange={(e) => updateAuthor(index, { institution: e.target.value })} /></div><div className="field"><label>Country</label><input className="input" value={author.country} onChange={(e) => updateAuthor(index, { country: e.target.value })} /></div><div className="field"><label>Email</label><input type="email" className="input" value={author.email} onChange={(e) => updateAuthor(index, { email: e.target.value })} /></div><div className="field"><label>ORCID</label><input className="input" placeholder="0000-0000-0000-0000" value={author.orcid || ""} onChange={(e) => updateAuthor(index, { orcid: e.target.value })} /></div><div className="field" style={{ justifyContent: "end" }}><label><input type="checkbox" checked={author.isCorresponding} onChange={(e) => setEditing({ ...form, authors: form.authors.map((a, i) => ({ ...a, isCorresponding: i === index ? e.target.checked : e.target.checked ? false : a.isCorresponding })) })} /> Corresponding author</label></div></div></div>)}<div className="form-actions"><button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={busy}>Save Article</button></div></div>}<div className="table-wrap"><table className="data-table"><thead><tr><th>Article</th><th>Conference</th><th>Publication</th><th>Downloads</th><th>Status</th><th>Actions</th></tr></thead><tbody>{articles.map((a) => <tr key={a.id}><td><strong>{a.title}</strong><br /><span className="small muted">/{a.slug}</span></td><td>{conferenceMap.get(a.conferenceId) || "—"}</td><td>{a.publicationDate || "—"}</td><td>{a.downloadCount || 0}</td><td><span className={`status ${a.status === "published" ? "status-published" : "status-draft"}`}>{a.status}</span></td><td><div style={{ display: "flex", gap: 6 }}><button className="btn btn-ghost btn-small" onClick={() => setEditing({ ...a, authors: a.authors || [{ ...emptyAuthor }] })}>Edit</button><button className="btn btn-danger btn-small" onClick={() => onDelete(a.id)}>Delete</button></div></td></tr>)}</tbody></table></div></>;
 }
 
-function MessagesTab({ messages, markRead }: { messages: Message[]; markRead: (message: Message) => Promise<void> }) {
-  return <><div className="admin-toolbar"><div><span className="eyebrow">Publisher correspondence</span><h1 style={{ margin: "5px 0", color: "var(--navy)" }}>Messages</h1><p className="muted" style={{ margin: 0 }}>Messages submitted through the hidden contact page.</p></div></div><div className="table-wrap"><table className="data-table"><thead><tr><th>Status</th><th>From</th><th>Subject</th><th>Message</th><th>Action</th></tr></thead><tbody>{messages.map((m) => <tr key={m.id} className={m.status !== "read" ? "message-unread" : ""}><td><span className="status">{m.status}</span></td><td><strong>{m.name}</strong><br /><a className="link" href={`mailto:${m.email}`}>{m.email}</a></td><td>{m.subject}</td><td style={{ maxWidth: 460 }}>{m.message}</td><td>{m.status !== "read" && <button className="btn btn-primary btn-small" onClick={() => markRead(m)}>Mark read</button>}</td></tr>)}</tbody></table></div></>;
+function MessagesTab({
+  messages,
+  markRead,
+  deleteMessage
+}: {
+  messages: Message[];
+  markRead: (message: Message) => Promise<void>;
+  deleteMessage: (message: Message) => Promise<void>;
+}) {
+  return (
+    <>
+      <div className="admin-toolbar">
+        <div>
+          <span className="eyebrow">Publisher correspondence</span>
+          <h1 style={{ margin: "5px 0", color: "var(--navy)" }}>Messages</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            Messages submitted through the hidden contact page.
+          </p>
+        </div>
+      </div>
+
+      <div className="table-wrap">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>From</th>
+              <th>Subject</th>
+              <th>Message</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {messages.map((m) => (
+              <tr
+                key={m.id}
+                className={m.status !== "read" ? "message-unread" : ""}
+              >
+                <td>
+                  <span className="status">{m.status}</span>
+                </td>
+
+                <td>
+                  <strong>{m.name}</strong>
+                  <br />
+                  <a className="link" href={`mailto:${m.email}`}>
+                    {m.email}
+                  </a>
+                </td>
+
+                <td>{m.subject}</td>
+
+                <td style={{ maxWidth: 460 }}>
+                  {m.message}
+                </td>
+
+                <td>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {m.status !== "read" && (
+                      <button
+                        className="btn btn-primary btn-small"
+                        onClick={() => markRead(m)}
+                      >
+                        Mark read
+                      </button>
+                    )}
+
+                    <button
+                      className="btn btn-danger btn-small"
+                      onClick={() => deleteMessage(m)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
