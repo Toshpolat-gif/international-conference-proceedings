@@ -158,21 +158,153 @@ function ArticlesTab({ articles, conferences, editing, setEditing, refresh, onDe
   const conferenceMap = useMemo(() => new Map(conferences.map((c) => [c.id, c.title])), [conferences]);
   const form = editing || blankArticle(conferences[0]?.id || "");
 
-  async function save() {
-    if (!form.conferenceId || !form.title || !form.slug || !form.abstract || !form.authors.length) { setNotice("Conference, title, slug, abstract, and at least one author are required."); return; }
-    if (!form.authors.every((a) => a.fullName && a.institution && a.country && a.email)) { setNotice("Each author needs full name, institution, country, and email."); return; }
-    setNotice("Saving article…");
-    try {
-      const id = form.id || doc(collection(db, "articles")).id;
-      const conference = conferences.find((c) => c.id === form.conferenceId);
-      if (!conference) throw new Error("Conference not found.");
-      const clean = { ...form, id: undefined, updatedAt: serverTimestamp(), ...(form.id ? {} : { createdAt: serverTimestamp() }) } as Record<string, unknown>;
-      delete clean.id;
-      if (pdfFile) { clean.pdfKey = await uploadFile(pdfFile, { kind: "article", year: (conference.publicationDate || conference.conferenceDate || new Date().toISOString()).slice(0, 4), conferenceSlug: conference.slug, articleId: id }); clean.pdfFileName = pdfFile.name; clean.pdfSize = pdfFile.size; }
-      await setDoc(doc(db, "articles", id), clean, { merge: true });
-      setEditing(null); setPdfFile(null); setNotice("Article saved."); await refresh();
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Unable to save article."); }
+ async function save() {
+  if (
+    !form.conferenceId ||
+    !form.title ||
+    !form.slug ||
+    !form.abstract ||
+    !form.authors.length
+  ) {
+    setNotice(
+      "Conference, title, slug, abstract, and at least one author are required."
+    );
+    return;
   }
+
+  if (
+    !form.authors.every(
+      (a) => a.fullName && a.institution && a.country && a.email
+    )
+  ) {
+    setNotice(
+      "Each author needs full name, institution, country, and email."
+    );
+    return;
+  }
+
+  setNotice("Saving article…");
+
+  try {
+    const id = form.id || doc(collection(db, "articles")).id;
+
+    const conference = conferences.find(
+      (c) => c.id === form.conferenceId
+    );
+
+    if (!conference) {
+      throw new Error("Conference not found.");
+    }
+
+    const existingArticle = form.id
+      ? articles.find((a) => a.id === form.id)
+      : undefined;
+
+    const previousStatus = existingArticle?.status;
+
+    const shouldNotify =
+      !form.id ||
+      previousStatus !== form.status;
+
+    const clean = {
+      ...form,
+      id: undefined,
+      updatedAt: serverTimestamp(),
+      ...(form.id ? {} : { createdAt: serverTimestamp() }),
+    } as Record<string, unknown>;
+
+    delete clean.id;
+
+    if (pdfFile) {
+      clean.pdfKey = await uploadFile(pdfFile, {
+        kind: "article",
+        year: (
+          conference.publicationDate ||
+          conference.conferenceDate ||
+          new Date().toISOString()
+        ).slice(0, 4),
+        conferenceSlug: conference.slug,
+        articleId: id,
+      });
+
+      clean.pdfFileName = pdfFile.name;
+      clean.pdfSize = pdfFile.size;
+    }
+
+    await setDoc(doc(db, "articles", id), clean, { merge: true });
+
+    let notificationSent = false;
+
+    if (shouldNotify) {
+      try {
+        const token = await getAdminToken();
+
+        const authorEmails = [
+          ...new Set(
+            form.authors
+              .map((author) => author.email.trim())
+              .filter(Boolean)
+          ),
+        ];
+
+        const articleUrl =
+          form.status === "published"
+            ? `${window.location.origin}/articles/${form.slug}`
+            : undefined;
+
+        const response = await fetch("/api/article-status-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            articleId: id,
+            title: form.title,
+            status: form.status,
+            authorEmails,
+            articleUrl,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Unable to send article notification."
+          );
+        }
+
+        notificationSent = true;
+      } catch (error) {
+        console.error("Article notification failed:", error);
+      }
+    }
+
+    setEditing(null);
+    setPdfFile(null);
+
+    if (shouldNotify && !notificationSent) {
+      setNotice(
+        form.status === "published"
+          ? "Article published, but the author notification could not be sent."
+          : "Article saved as draft, but the author notification could not be sent."
+      );
+    } else if (form.status === "published") {
+      setNotice("Article published and author notification sent.");
+    } else {
+      setNotice("Article saved as draft and author notification sent.");
+    }
+
+    await refresh();
+  } catch (error) {
+    setNotice(
+      error instanceof Error
+        ? error.message
+        : "Unable to save article."
+    );
+  }
+}
 
   function updateAuthor(index: number, patch: Partial<Author>) { setEditing({ ...form, authors: form.authors.map((a, i) => i === index ? { ...a, ...patch } : a) }); }
   function addAuthor() { setEditing({ ...form, authors: [...form.authors, { ...emptyAuthor }] }); }
