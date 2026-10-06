@@ -9,11 +9,11 @@ export default async function HomePage() {
   let conferences: Awaited<ReturnType<typeof getPublishedConferences>> = [];
   let articles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
   try {
-    [conferences, articles] = await Promise.all([getPublishedConferences(6), getPublishedArticles(6)]);
+    [conferences, articles] = await Promise.all([getPublishedConferences(6), getPublishedArticles(100)]);
   } catch {
     // The public shell still renders before Firebase is configured.
   }
-
+  const featuredArticles = articles.slice(0, 6);
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -95,7 +95,7 @@ export default async function HomePage() {
       <section className="section">
         <div className="container">
           <div className="section-title-row"><div><span className="eyebrow">Latest research</span><h2>Published Articles</h2></div><Link className="btn btn-ghost" href="/articles">Browse Articles</Link></div>
-          {articles.length ? <div className="cards">{articles.map((a) => <article className="card" key={a.id}><div className="card-body"><div className="card-meta"><span className="chip">Article</span><span className="chip chip-mango">English</span></div><h3>{a.title}</h3><p>{a.authors.map((x) => x.fullName).join(", ")}</p><Link className="card-link" href={`/articles/${a.slug}`}>Read article →</Link></div></article>)}</div> : <div className="empty">No published articles are available yet.</div>}
+          {articles.length ? <div className="cards">{featuredArticles.map((a) => <article className="card" key={a.id}><div className="card-body"><div className="card-meta"><span className="chip">Article</span><span className="chip chip-mango">English</span></div><h3>{a.title}</h3><p>{a.authors.map((x) => x.fullName).join(", ")}</p><Link className="card-link" href={`/articles/${a.slug}`}>Read article →</Link></div></article>)}</div> : <div className="empty">No published articles are available yet.</div>}
         </div>
       </section>
 
