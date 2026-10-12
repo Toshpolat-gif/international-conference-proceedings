@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
 
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]+/g, "-").toLowerCase();
     let key = `${input.kind === "article" ? "articles" : input.kind === "poster" ? "posters" : "proceedings"}/${input.year}/${input.conferenceSlug}/`;
-    key += input.kind === "article" ? `${input.articleId || crypto.randomUUID()}-${safeName}` : safeName;
+    key += input.kind === "article"
+  ? `${input.articleId || crypto.randomUUID()}-${safeName}`
+  : `${crypto.randomUUID()}-${safeName}`;
 
     const url = await createUploadUrl({ key, contentType: input.contentType, contentLength: input.size, expiresIn: 900 });
     return NextResponse.json({ key, url, expiresIn: 900 });
