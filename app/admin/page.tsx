@@ -131,7 +131,62 @@ function ConferencesTab({ conferences, editing, setEditing, refresh, onDelete, s
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [proceedingsFile, setProceedingsFile] = useState<File | null>(null);
   const form = editing || blankConference();
+  const [notifyingId, setNotifyingId] = useState<string | null>(null);
 
+  async function notifyAuthors(conference: Conference) {
+    if (conference.status !== "published" || !conference.proceedingsKey) {
+      setNotice("Publish the conference and upload its proceedings PDF first.");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Send proceedings publication emails to authors of published articles in "${conference.title}"?`
+    );
+
+    if (!confirmed) return;
+
+    setNotifyingId(conference.id);
+    setNotice("");
+
+    try {
+      const token = await getAdminToken();
+
+      const response = await fetch(
+        `/api/conferences/${encodeURIComponent(conference.id)}/notify-proceedings-authors`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to notify authors.");
+      }
+
+      if (data.failed > 0) {
+        setNotice(
+          `Proceedings notification: ${data.sent} sent, ${data.skipped} skipped, ${data.failed} failed.`
+        );
+        return;
+      }
+
+      setNotice(
+        `Proceedings notification completed: ${data.sent} sent, ${data.skipped} skipped, ${data.total} total authors.`
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Unable to notify conference authors."
+      );
+    } finally {
+      setNotifyingId(null);
+    }
+  }
   async function save() {
     setNotice("");
     if (!form.title || !form.slug || !form.theme || !form.description) { setNotice("Title, slug, theme, and description are required."); return; }
@@ -147,7 +202,20 @@ function ConferencesTab({ conferences, editing, setEditing, refresh, onDelete, s
     } catch (error) { setNotice(error instanceof Error ? error.message : "Unable to save conference."); }
   }
 
-  return <><div className="admin-toolbar"><div><span className="eyebrow">Conference management</span><h1 style={{ margin: "5px 0", color: "var(--navy)" }}>Conferences</h1></div><button className="btn btn-primary" onClick={() => setEditing(blankConference())}>New Conference</button></div>{editing && <div className="panel" style={{ marginBottom: 18 }}><h3>{form.id ? "Edit conference" : "New conference"}</h3><div className="form-grid"><div className="field"><label>Conference title</label><input className="input" value={form.title} onChange={(e) => setEditing({ ...form, title: e.target.value })} /></div><div className="field"><label>Slug</label><input className="input" value={form.slug} onChange={(e) => setEditing({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-") })} /></div><div className="field"><label>Acronym</label><input className="input" value={form.acronym || ""} onChange={(e) => setEditing({ ...form, acronym: e.target.value })} /></div><div className="field"><label>Theme</label><input className="input" value={form.theme} onChange={(e) => setEditing({ ...form, theme: e.target.value })} /></div><div className="field"><label>Conference date</label><input type="date" className="input" value={form.conferenceDate || ""} onChange={(e) => setEditing({ ...form, conferenceDate: e.target.value })} /></div><div className="field"><label>Location</label><input className="input" value={form.location} onChange={(e) => setEditing({ ...form, location: e.target.value })} /></div><div className="field"><label>Event type</label><select className="select" value={form.eventType || "Online"} onChange={(e) => setEditing({ ...form, eventType: e.target.value as Conference["eventType"] })}><option>Online</option><option>Hybrid</option><option>In-person</option></select></div><div className="field"><label>Status</label><select className="select" value={form.status} onChange={(e) => setEditing({ ...form, status: e.target.value as Conference["status"] })}><option value="draft">Draft</option><option value="published">Published</option></select></div><div className="field full"><label>Description</label><textarea className="textarea" value={form.description} onChange={(e) => setEditing({ ...form, description: e.target.value })} /></div><div className="field"><label>Proceedings title</label><input className="input" value={form.proceedingsTitle} onChange={(e) => setEditing({ ...form, proceedingsTitle: e.target.value })} /></div><div className="field"><label>Publication date</label><input type="date" className="input" value={form.publicationDate || ""} onChange={(e) => setEditing({ ...form, publicationDate: e.target.value })} /></div><div className="field"><label>ISSN</label><input className="input" value={form.issn || ""} onChange={(e) => setEditing({ ...form, issn: e.target.value })} /></div><div className="field"><label>ISBN</label><input className="input" value={form.isbn || ""} onChange={(e) => setEditing({ ...form, isbn: e.target.value })} /></div><div className="field"><label>Volume</label><input className="input" value={form.volume || ""} onChange={(e) => setEditing({ ...form, volume: e.target.value })} /></div><div className="field"><label>Issue</label><input className="input" value={form.issue || ""} onChange={(e) => setEditing({ ...form, issue: e.target.value })} /></div><div className="field"><label>Organizers (comma-separated)</label><input className="input" value={form.organizers.join(", ")} onChange={(e) => setEditing({ ...form, organizers: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></div><div className="field"><label>Editors (comma-separated)</label><input className="input" value={form.editors.join(", ")} onChange={(e) => setEditing({ ...form, editors: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></div><div className="field"><label>Poster</label><input type="file" accept="image/jpeg,image/png,image/webp" className="input" onChange={(e) => setPosterFile(e.target.files?.[0] || null)} /></div><div className="field"><label>Proceedings PDF</label><input type="file" accept="application/pdf" className="input" onChange={(e) => setProceedingsFile(e.target.files?.[0] || null)} /></div></div><div className="form-actions"><button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={busy}>Save Conference</button></div></div>}<div className="table-wrap"><table className="data-table"><thead><tr><th>Conference</th><th>Date</th><th>Volume</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead><tbody>{conferences.map((c) => <tr key={c.id}><td><strong>{c.title}</strong><br /><span className="small muted">/{c.slug}</span></td><td>{c.conferenceDate || "—"}</td><td>{c.volume || "—"}</td><td><span className={`status ${c.status === "published" ? "status-published" : "status-draft"}`}>{c.status}</span></td><td>{c.posterKey ? "Poster" : "—"} · {c.proceedingsKey ? "Proceedings" : "—"}</td><td><div style={{ display: "flex", gap: 6 }}><button className="btn btn-ghost btn-small" onClick={() => setEditing({ ...c })}>Edit</button><button className="btn btn-danger btn-small" onClick={() => onDelete(c.id)}>Delete</button></div></td></tr>)}</tbody></table></div></>;
+  return <><div className="admin-toolbar"><div><span className="eyebrow">Conference management</span><h1 style={{ margin: "5px 0", color: "var(--navy)" }}>Conferences</h1></div>
+  <button className="btn btn-primary" onClick={() => setEditing(blankConference())}>New Conference</button></div>{editing && <div className="panel" style={{ marginBottom: 18 }}><h3>{form.id ? "Edit conference" : "New conference"}</h3><div className="form-grid"><div className="field"><label>Conference title</label><input className="input" value={form.title} onChange={(e) => setEditing({ ...form, title: e.target.value })} /></div><div className="field"><label>Slug</label><input className="input" value={form.slug} onChange={(e) => setEditing({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-") })} /></div><div className="field"><label>Acronym</label><input className="input" value={form.acronym || ""} onChange={(e) => setEditing({ ...form, acronym: e.target.value })} /></div><div className="field"><label>Theme</label><input className="input" value={form.theme} onChange={(e) => setEditing({ ...form, theme: e.target.value })} /></div><div className="field"><label>Conference date</label><input type="date" className="input" value={form.conferenceDate || ""} onChange={(e) => setEditing({ ...form, conferenceDate: e.target.value })} /></div><div className="field"><label>Location</label><input className="input" value={form.location} onChange={(e) => setEditing({ ...form, location: e.target.value })} /></div><div className="field"><label>Event type</label><select className="select" value={form.eventType || "Online"} onChange={(e) => setEditing({ ...form, eventType: e.target.value as Conference["eventType"] })}><option>Online</option><option>Hybrid</option><option>In-person</option></select></div><div className="field"><label>Status</label><select className="select" value={form.status} onChange={(e) => setEditing({ ...form, status: e.target.value as Conference["status"] })}><option value="draft">Draft</option><option value="published">Published</option></select></div><div className="field full"><label>Description</label><textarea className="textarea" value={form.description} onChange={(e) => setEditing({ ...form, description: e.target.value })} /></div><div className="field"><label>Proceedings title</label><input className="input" value={form.proceedingsTitle} onChange={(e) => setEditing({ ...form, proceedingsTitle: e.target.value })} /></div><div className="field"><label>Publication date</label><input type="date" className="input" value={form.publicationDate || ""} onChange={(e) => setEditing({ ...form, publicationDate: e.target.value })} /></div><div className="field"><label>ISSN</label><input className="input" value={form.issn || ""} onChange={(e) => setEditing({ ...form, issn: e.target.value })} /></div><div className="field"><label>ISBN</label><input className="input" value={form.isbn || ""} onChange={(e) => setEditing({ ...form, isbn: e.target.value })} /></div><div className="field"><label>Volume</label><input className="input" value={form.volume || ""} onChange={(e) => setEditing({ ...form, volume: e.target.value })} /></div><div className="field"><label>Issue</label><input className="input" value={form.issue || ""} onChange={(e) => setEditing({ ...form, issue: e.target.value })} /></div><div className="field"><label>Organizers (comma-separated)</label><input className="input" value={form.organizers.join(", ")} onChange={(e) => setEditing({ ...form, organizers: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></div><div className="field"><label>Editors (comma-separated)</label><input className="input" value={form.editors.join(", ")} onChange={(e) => setEditing({ ...form, editors: e.target.value.split(",").map((x) => x.trim()).filter(Boolean) })} /></div><div className="field"><label>Poster</label><input type="file" accept="image/jpeg,image/png,image/webp" className="input" onChange={(e) => setPosterFile(e.target.files?.[0] || null)} /></div><div className="field"><label>Proceedings PDF</label><input type="file" accept="application/pdf" className="input" onChange={(e) => setProceedingsFile(e.target.files?.[0] || null)} /></div></div><div className="form-actions"><button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={busy}>Save Conference</button></div></div>}<div className="table-wrap"><table className="data-table"><thead><tr><th>Conference</th><th>Date</th><th>Volume</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead><tbody>{conferences.map((c) => <tr key={c.id}><td><strong>{c.title}</strong><br /><span className="small muted">/{c.slug}</span></td><td>{c.conferenceDate || "—"}</td><td>{c.volume || "—"}</td><td><span className={`status ${c.status === "published" ? "status-published" : "status-draft"}`}>{c.status}</span></td><td>{c.posterKey ? "Poster" : "—"} · {c.proceedingsKey ? "Proceedings" : "—"}</td><td><div style={{ display: "flex", gap: 6 }}>
+    <button
+      className="btn btn-ghost btn-small"
+      onClick={() => void notifyAuthors(c)}
+      disabled={
+        notifyingId !== null ||
+        c.status !== "published" ||
+        !c.proceedingsKey
+      }
+    >
+      {notifyingId === c.id ? "Sending..." : "Notify Authors"}
+    </button>
+    <button className="btn btn-ghost btn-small" onClick={() => setEditing({ ...c })}>Edit</button><button className="btn btn-danger btn-small" onClick={() => onDelete(c.id)}>Delete</button></div></td></tr>)}</tbody></table></div></>;
 }
 
 type ArticleForm = Omit<Article, "id" | "createdAt" | "updatedAt" | "downloadCount"> & { id?: string };
