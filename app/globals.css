@@ -136,7 +136,7 @@ button { cursor: pointer; }
 .article-authors strong { color:var(--navy); }
 .article-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: minmax(0, 1fr) 435px;
   gap: 36px;
   align-items: start;
 }
@@ -476,4 +476,43 @@ button { cursor: pointer; }
 
 .article-publication-context .link {
   font-weight: 750;
+}
+
+.meta-table .doi-link {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+.meta-table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  box-sizing: border-box;
+}
+
+.meta-table td {
+  box-sizing: border-box;
+  min-width: 0;
+  white-space: normal;
+}
+
+.meta-table td:first-child {
+  width: 32%;
+}
+
+.meta-table td:last-child {
+  width: 68%;
+  overflow-wrap: anywhere;
+}
+
+.meta-table .doi-link {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
