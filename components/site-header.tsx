@@ -13,7 +13,7 @@ export function SiteHeader() {
         <Link className="brand" href="/" onClick={() => setOpen(false)}>
           <Image src="/site-logo.png" alt={siteConfig.name} width={54} height={54} priority />
           <span className="brand-copy">
-            <span className="brand-name">{siteConfig.name}</span><br></br>
+            <span className="brand-name">{siteConfig.name}</span>
             <span className="brand-subtitle">Scholarly publishing platform</span>
           </span>
         </Link>

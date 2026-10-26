@@ -33,7 +33,7 @@ export function SiteFooter() {
       </div>
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} {siteConfig.name}</span>
-        <span>International • English-language publication platform</span>
+        <span>International publication platform</span>
       </div>
     </footer>
   );

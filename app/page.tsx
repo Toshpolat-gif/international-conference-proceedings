@@ -78,6 +78,51 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="section services-section">
+        <div className="container">
+          <div className="services-grid">
+            <article className="service-panel">
+              <h2>For Researchers</h2>
+              <ul>
+                <li>Discover published research papers</li>
+                <li>Browse conference proceedings</li>
+                <li>Read and download articles</li>
+                <li>Access DOI and citation information</li>
+              </ul>
+              <Link className="service-action" href="/articles">
+                Explore Research →
+              </Link>
+            </article>
+
+            <article className="service-panel">
+              <h2>For Authors &amp; Editors</h2>
+              <ul>
+                <li>Review author guidelines</li>
+                <li>Prepare manuscripts for publication</li>
+                <li>Learn about publication policies</li>
+                <li>Understand the publication process</li>
+              </ul>
+              <Link className="service-action" href="/for-authors">
+                Author Guidelines →
+              </Link>
+            </article>
+
+            <article className="service-panel">
+              <h2>For Conference Organizers</h2>
+              <ul>
+                <li>Explore proceedings publishing services</li>
+                <li>Prepare conference publication materials</li>
+                <li>Organize article-level metadata</li>
+                <li>Contact us about collaboration</li>
+              </ul>
+              <Link className="service-action" href="/contact">
+                Contact the Publisher →
+              </Link>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section className="section section-muted">
         <div className="container">
           <div className="section-title-row">

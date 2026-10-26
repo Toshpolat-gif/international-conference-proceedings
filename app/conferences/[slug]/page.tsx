@@ -94,7 +94,7 @@ const breadcrumbJsonLd = {
       }}
     />
 
-    <section className="page-head container">
+    <section className="page-head container conference-detail-head">
       <nav
         aria-label="Breadcrumb"
         style={{
@@ -108,7 +108,8 @@ const breadcrumbJsonLd = {
         <span aria-hidden="true"> → </span>
         <span>{conference.title}</span>
       </nav>
-      <span className="eyebrow">International conference</span><h1>{conference.title}</h1><p>{conference.theme}</p></section><section className="section"><div className="container split"><div className="panel"><h3>Conference overview</h3><p>{conference.description}</p><table className="meta-table"><tbody><tr><td>Date</td><td>{conference.conferenceDate || "To be announced"}</td></tr><tr><td>Format</td><td>{conference.eventType || "Online"}</td></tr>
+      <span className="eyebrow">International conference</span><h1>{conference.title}</h1><p>{conference.theme}</p></section>
+      <section className="section conference-overview-section"><div className="container split conference-overview-grid"><div className="panel conference-overview-panel"><h3>Conference overview</h3><p>{conference.description}</p><table className="meta-table"><tbody><tr><td>Date</td><td>{conference.conferenceDate || "To be announced"}</td></tr><tr><td>Format</td><td>{conference.eventType || "Online"}</td></tr>
   <tr>
   <td>Proceedings</td>
   <td>
@@ -124,5 +125,5 @@ const breadcrumbJsonLd = {
   hasPdf={Boolean(conference.proceedingsKey)}
 />
 </div>
-<div className="card"><div className="poster-wrap">{conference.posterKey ? <img className="poster-img" src={`/api/conferences/${conference.id}/poster`} alt={`${conference.title} poster`} /> : <div className="poster-placeholder">Conference poster will be published here.</div>}</div><div className="card-body"><h3>Organizers</h3><p>{conference.organizers?.join(" • ") || "International conference organizers"}</p></div></div></div></section><section className="section section-muted"><div className="container"><div className="section-title-row"><div><span className="eyebrow">Research papers</span><h2>Published papers</h2></div></div>{articles.length ? <div className="cards">{articles.map((a) => <article className="card" key={a.id}><div className="card-body"><div className="card-meta"><span className="chip">Published</span>{a.doi && <span className="chip chip-avocado">DOI</span>}</div><h3>{a.title}</h3><p>{a.authors.map((x) => x.fullName).join(", ")}</p><Link className="card-link" href={`/articles/${a.slug}`}>Open article →</Link></div></article>)}</div> : <div className="empty">No published papers are linked to this conference yet.</div>}</div></section></PublicShell>);
+<div className="card conference-poster-card"><div className="poster-wrap conference-detail-poster-wrap">{conference.posterKey ? <img className="poster-img" src={`/api/conferences/${conference.id}/poster`} alt={`${conference.title} poster`} /> : <div className="poster-placeholder">Conference poster will be published here.</div>}</div><div className="card-body"><h3>Organizers</h3><p>{conference.organizers?.join(" • ") || "International conference organizers"}</p></div></div></div></section><section className="section section-muted conference-papers-section"><div className="container"><div className="section-title-row"><div><span className="eyebrow">Research papers</span><h2>Published papers</h2></div></div>{articles.length ? <div className="cards conference-paper-grid">{articles.map((a) => <article className="card" key={a.id}><div className="card-body"><div className="card-meta"><span className="chip">Published</span>{a.doi && <span className="chip chip-avocado">DOI</span>}</div><h3>{a.title}</h3><p>{a.authors.map((x) => x.fullName).join(", ")}</p><Link className="card-link" href={`/articles/${a.slug}`}>Open article →</Link></div></article>)}</div> : <div className="empty">No published papers are linked to this conference yet.</div>}</div></section></PublicShell>);
 }

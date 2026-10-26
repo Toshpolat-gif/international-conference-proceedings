@@ -56,10 +56,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       citation_title: article.title,
 
       citation_author: (article.authors || []).map(
-        (author) => author.fullName
-      ),
+            (author) => author.fullName
+          ),
 
-      citation_publication_date: article.publicationDate || "",
+          ...(article.publicationDate
+      ? {
+          citation_publication_date: article.publicationDate.replace(
+            /-/g,
+            "/",
+          ),
+        }
+      : {}),
 
       citation_pdf_url:
         `${siteConfig.url}/articles/${article.slug}/pdf`,
@@ -248,5 +255,5 @@ const jsonLd = {
             : "Conference proceedings"}
         </td>
       </tr>
-<tr><td>Date</td><td>{article.publicationDate || "—"}</td></tr><tr><td>Pages</td><td>{article.pageStart && article.pageEnd ? `${article.pageStart}–${article.pageEnd}` : "—"}</td></tr><tr><td>Volume</td><td>{article.volume || conference?.volume || "—"}</td></tr><tr><td>Issue</td><td>{article.issue || conference?.issue || "—"}</td></tr><tr><td>DOI</td><td>{article.doi ? <a className="link" href={`https://doi.org/${article.doi.replace(/^https:\/\/doi.org\//, "")}`} target="_blank" rel="noreferrer">{article.doi}</a> : "Coming soon"}</td></tr><tr><td>Language</td><td>English</td></tr><tr><td>License</td><td>{article.license || "See publisher policy"}</td></tr></tbody></table></div></aside></div></section></article></PublicShell>;
+<tr><td>Date</td><td>{article.publicationDate || "—"}</td></tr><tr><td>Pages</td><td>{article.pageStart && article.pageEnd ? `${article.pageStart}–${article.pageEnd}` : "—"}</td></tr><tr><td>Volume</td><td>{article.volume || conference?.volume || "—"}</td></tr><tr><td>Issue</td><td>{article.issue || conference?.issue || "—"}</td></tr><tr><td>DOI</td><td>{article.doi ? <a className="link doi-link" href={`https://doi.org/${article.doi.replace(/^https:\/\/doi.org\//, "")}`} target="_blank" rel="noreferrer">{article.doi}</a> : "Not assigned"}</td></tr><tr><td>Language</td><td>English</td></tr><tr><td>License</td><td>{article.license || "See publisher policy"}</td></tr></tbody></table></div></aside></div></section></article></PublicShell>;
 }

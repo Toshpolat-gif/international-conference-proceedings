@@ -7,7 +7,7 @@ export const siteConfig = {
   language: "en",
   description:
     "International Conference Proceedings is a scholarly publishing platform for discovering, reading, and citing conference research papers.",
-  location: "International",
+  location: "130100, Jizzakh, Uzbekistan",
   colors: {
     navy: "#102A43",
     tiffany: "#0ABAB5",
