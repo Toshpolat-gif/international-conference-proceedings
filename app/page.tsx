@@ -69,11 +69,6 @@ export default async function HomePage() {
                 fetchPriority="high"
               />
             </div>
-            <div className="hero-card-grid">
-              <div className="mini-stat"><strong>{conferences.length}</strong><span>Featured conferences</span></div>
-              <div className="mini-stat"><strong>{articles.length}</strong><span>Featured articles</span></div>
-              <div className="mini-stat"><strong>EN</strong><span>Publication language</span></div>
-            </div>
           </div>
         </div>
       </section>
